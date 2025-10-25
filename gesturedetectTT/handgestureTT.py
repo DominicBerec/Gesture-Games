@@ -1,9 +1,9 @@
 import cv2
-
 import mediapipe as mp
-
 import sys
 import os
+import pygame
+import numpy as np
 
 # Get the absolute path of the directory containing the module you want to import
 # For example, if 'my_module.py' is in '../another_directory' relative to the current script
@@ -71,10 +71,33 @@ hand_model = mp.solutions.hands.Hands(
 )
 drawer = mp.solutions.drawing_utils
 
+# Initialize pygame
+pygame.init()
+window_size = (800, 600)  # Window size
+screen = pygame.display.set_mode(window_size)
+pygame.display.set_caption("Tic Tac Toe with Hand Gestures")
+
+# Function to maintain aspect ratio
+def scale_maintain_aspect_ratio(frame, target_size):
+    target_width, target_height = target_size
+    height, width = frame.shape[:2]
+    
+    # Calculate scaling factor while maintaining aspect ratio
+    scale = min(target_width/width, target_height/height)
+    new_width = int(width * scale)
+    new_height = int(height * scale)
+    
+    return new_width, new_height
+
 # Start the webcam
 camera = cv2.VideoCapture(0)
 
-while True:
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    
     frame_exists, frame = camera.read()
     if not frame_exists:
         print("No frame captured.")
@@ -176,12 +199,36 @@ while True:
                 cv2.putText(frame, "Detecting...", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
 
     flipped = cv2.flip(frame,3)
-    # Show the frame
-    cv2.imshow("Hand Tracker", frame)
-    if cv2.waitKey(1) & 0xFF == 27:
-        break
+    # Convert frame to pygame surface
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = np.rot90(frame)  # Rotate the frame
+    frame = np.flipud(frame)  # Flip the frame vertically
+    frame_surface = pygame.surfarray.make_surface(frame)
+    
+    # Scale frame maintaining aspect ratio
+    new_width, new_height = scale_maintain_aspect_ratio(frame, window_size)
+    frame_surface = pygame.transform.scale(frame_surface, (new_width, new_height))
+    
+    # Calculate position to center the frame
+    x_offset = (window_size[0] - new_width) // 2
+    y_offset = (window_size[1] - new_height) // 2
+    
+    # Clear the screen with black background
+    screen.fill((0, 0, 0))
+    
+    # Draw the frame on pygame window
+    screen.blit(frame_surface, (x_offset, y_offset))
+    
+    # Draw GUI elements
+    font = pygame.font.Font(None, 36)
+    text = font.render("Tic Tac Toe - Make O gesture to play", True, (255, 255, 255))
+    screen.blit(text, (10, 10))
+    
+    # Update the display
+    pygame.display.flip()
 
 # Cleanup
 camera.release()
 cv2.destroyAllWindows()
+pygame.quit()
 hand_model.close()

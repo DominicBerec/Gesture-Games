@@ -12,6 +12,8 @@ module_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'game
 sys.path.insert(0, module_dir) # insert at the beginning for higher priority
 import Board
 
+board = Board.Board()
+
 # Define zones with relative coordinates (fractions of the frame)
 colored_zones = [
     {"name": "red", "coords": (0, 0, 0.33, 0.2)},       # top-left
@@ -24,6 +26,21 @@ colored_zones = [
     {"name": "brown", "coords": (0.33, 0.33, 0.66, 0.66)}, # center
     {"name": "pink", "coords": (0.66, 0.33, 1, 0.66)}      # mid-right
 ]
+
+def color_to_row_col(color):
+    color_positions = {
+        "red": (0, 0),
+        "yellow": (0, 1),
+        "green": (0, 2),
+        "blue": (1, 0),
+        "brown": (1, 1),
+        "pink": (1, 2),
+        "black": (2, 0),
+        "purple": (2, 1),
+        "orange": (2, 2)
+    }
+    
+    return color_positions.get(color.lower())
 
 zone_color = { 
     "red" : (255,0,0),
@@ -86,7 +103,7 @@ while True:
             index_tip = landmarks[8]
             fingertip_x, fingertip_y, _ = landmarks[8]
             distance = ((thumb_tip[0]-index_tip[0])**2 + (thumb_tip[1]-index_tip[1])**2)**0.5
-            if distance < 0.05:
+            if distance < 0.07:
                 cv2.putText(frame, "O gesture", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,0), 1)
                 for zone in colored_zones:
                     x1_frac, y1_frac, x2_frac, y2_frac = zone["coords"]
@@ -98,7 +115,13 @@ while True:
                         x1, y1, x2, y2 = zone["coords"]  # fractions 0-1
                         if x1 <= fingertip_x <= x2 and y1 <= fingertip_y <= y2:
                                 current_zone = zone["name"]
-                                print(current_zone)
+
+                                row, col = color_to_row_col(current_zone)
+
+                                board.mark_square(1, row, col)
+                                board.print_board()
+
+
 
 
 

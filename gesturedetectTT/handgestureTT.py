@@ -1,5 +1,6 @@
 import cv2
 
+from gestures import get_hand_landmarks, o_sign, paper, rock, scissors
 import mediapipe as mp
 
 import sys
@@ -16,9 +17,9 @@ sys.path.insert(0, module_dir1) # insert at the beginning for higher priority
 sys.path.insert(0, module_dir2) # insert at the beginning for higher priority
 
 from ttai import call_tt
-import board
+import Board
 
-board = board.Board()
+board = Board.Board()
 
 # Define zones with relative coordinates (fractions of the frame)
 colored_zones = [
@@ -59,7 +60,54 @@ zone_color = {
     "brown": (139,69,19),
     "pink": (255,105,180)
 }
+def draw_zone_borders(frame, colored_zones, zone_color, size):
+    """Draw colored borders around each zone"""
+    frame_thickness = 20
+    for zone in colored_zones:
+        x1_frac, y1_frac, x2_frac, y2_frac = zone["coords"]
+        x1 = int(x1_frac * size)
+        y1 = int(y1_frac * size)
+        x2 = int(x2_frac * size)
+        y2 = int(y2_frac * size)
+        color = zone_color[zone["name"]]
+        
+        if y1 == 0:
+            cv2.line(frame, (x1, 0), (x2, 0), color, frame_thickness)
+        if y2 == size:
+            cv2.line(frame, (x1, size-1), (x2, size-1), color, frame_thickness)
+        if x1 == 0:
+            cv2.line(frame, (0, y1), (0, y2), color, frame_thickness)
+        if x2 == size:
+            cv2.line(frame, (size-1, y1), (size-1, y2), color, frame_thickness)
 
+def find_zone_at_position(x, y, colored_zones):
+    """Find which zone contains the given coordinates"""
+    for zone in colored_zones:
+        x1, y1, x2, y2 = zone["coords"]
+        if x1 <= x <= x2 and y1 <= y <= y2:
+            return zone["name"]
+    return None
+
+def handle_o_gesture(frame, board, colored_zones, x, y):
+    """Handle the O gesture detection and game logic"""
+
+    if board.game_over:
+        return
+    
+    zone_name = find_zone_at_position(x, y, colored_zones)
+    if zone_name:
+        row, col = color_to_row_col(zone_name)
+        success = board.mark_square("O", row, col)
+        
+        if board.game_over:
+            return
+            
+        if success:
+            print("Success")
+            board.print_board()
+            x_move, y_move = call_tt(board.board)
+            board.mark_square("X", x_move, y_move)
+            board.print_board()
 
 
 # Initialize MediaPipe modules
@@ -93,88 +141,32 @@ while True:
     # Process hands
     hand_results = hand_model.process(rgb_frame)
 
-    
-    # Draw zones scaled to frame
-
-
-        
-
-
-
     # Draw hands and detect "O" gesture
     if hand_results.multi_hand_landmarks:
         for hand in hand_results.multi_hand_landmarks:
+            # Draw landmarks ONCE
             drawer.draw_landmarks(frame, hand, mp.solutions.hands.HAND_CONNECTIONS)
-
-            landmarks = [(p.x, p.y, p.z) for p in hand.landmark]
-            thumb_tip = landmarks[4]
-            index_tip = landmarks[8]
-            fingertip_x, fingertip_y, _ = landmarks[8]
-            distance = ((thumb_tip[0]-index_tip[0])**2 + (thumb_tip[1]-index_tip[1])**2)**0.5
-            for zone in colored_zones:
-                    x1_frac, y1_frac, x2_frac, y2_frac = zone["coords"]
-                    x1 = int(x1_frac * size)
-                    y1 = int(y1_frac * size)
-                    x2 = int(x2_frac * size)
-                    y2 = int(y2_frac * size)
-                    color = zone_color[zone["name"]]
-                    frame_thickness = int(20)
-                    if y1 == 0:
-                        cv2.line(frame, (x1, 0), (x2, 0), color, frame_thickness)
-    
-                    if y2 == size:
-                        cv2.line(frame, (x1, size-1), (x2, size-1), color, frame_thickness)
-    
-                    if x1 == 0:
-                        cv2.line(frame, (0, y1), (0, y2), color, frame_thickness)
-    
-                    if x2 == size:
-                        cv2.line(frame, (size-1, y1), (size-1, y2), color, frame_thickness)
-            if distance < 0.07:
+            
+            # Extract landmarks ONCE
+            landmarks = get_hand_landmarks(hand)
+            
+            # Draw zone borders
+            draw_zone_borders(frame, colored_zones, zone_color, size)
+            
+            # Check gestures in priority order
+            is_o_sign, fingertip_x, fingertip_y = o_sign(landmarks)
+            
+            if is_o_sign:
+                handle_o_gesture(frame, board, colored_zones, fingertip_x, fingertip_y)
                 cv2.putText(frame, "O gesture", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,0), 1)
-                for zone in colored_zones:
-                    if board.game_over:
-                        break
-                    x1_frac, y1_frac, x2_frac, y2_frac = zone["coords"]
-                    x1 = int(x1_frac * size)
-                    y1 = int(y1_frac * size)
-                    x2 = int(x2_frac * size)
-                    y2 = int(y2_frac * size)
-                    for zone in colored_zones:
-                        x1, y1, x2, y2 = zone["coords"]  # fractions 0-1
-                        if x1 <= fingertip_x <= x2 and y1 <= fingertip_y <= y2:
-                                current_zone = zone["name"]
-
-                                row, col = color_to_row_col(current_zone)
-
-                                success = board.mark_square("O", row, col)
-
-                                if board.game_over:
-                                    break
-
-                                if success:
-                                    print("Success")
-                                    board.print_board()
-
-                                    x, y = call_tt(board.board)
-                                    board.mark_square("X", x, y)
-                                    board.print_board()
-
-                                    if board.game_over:
-                                        break
-
-                                    # top edge
-
-
-
-
-
-
-
-                
+            elif scissors(landmarks):
+                cv2.putText(frame, "Scissors", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,0), 1)
+            elif paper(landmarks):
+                cv2.putText(frame, "Paper", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,0), 1)
+            elif rock(landmarks):
+                cv2.putText(frame, "Rock", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,0), 1)
             else:
                 cv2.putText(frame, "Detecting...", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (255,255,255), 2)
-
     flipped = cv2.flip(frame,3)
     # Show the frame
     cv2.imshow("Hand Tracker", frame)

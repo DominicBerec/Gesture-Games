@@ -1,69 +1,66 @@
-from google import genai
-from dotenv import load_dotenv
-from utils import load_memory, write_memory
+import random
 
-# Load environment variables from .env file
-load_dotenv()
-
-# The client gets the API key from the environment variable `GEMINI_API_KEY`.
-client = genai.Client()
-
-memory_file = "memory.zip"
-
-memory = []
-
-print("Rock Paper Scissors")
-
-load_memory(memory_file, memory)
-
-memory.append("[Start of session]")
-memory.append("System: System: This is a game of rock paper scissors. You will only be allowed to output one word with your choice, a new line, and who won the round, so two words in total, nothing else"
-". while the game is ongoing. If the user wins output only 'User wins' if you win output 'System wins'. Accept creative choices by the user like 'gun' and plan a counterattack. Only output creative moves outside of the normal ones if the user already used a creative move. Accept when you lose to a creative move. Don't be biased and choose the incorrect move sometimes to let the user win at least a 40 percent of the time, more if they are clever. Reward the user for strategy by letting the user win more. Punish the user by not letting them win if they are repeating moves or being simple in the move choices.")
-
-if len(memory) > 2:
-    returning_prompt = "System: Previous memory was found. " \
-    "Because previous memory was found, write a start of game message to the user referencing your memory, don't limit yourself to one word. Write an entire sentence. Try writing something that will get the player fired up."
-    return_message = client.models.generate_content(
-        model="gemini-2.5-flash", contents="\n".join(memory) + "\n" + returning_prompt
-    )
-
-    memory.append("Gemini: " + return_message.text)
-    print("Gemini: " + return_message.text)
-
-user_input = input("Enter your move: ")
-
-while user_input != "exit":
-    memory.append("User:" + user_input)
-
-    response = client.models.generate_content(
-        model="gemini-2.5-flash", contents="\n".join(memory)
-    )
-
-    print("Gemini: " + response.text)
-
-    user_input = input("Enter your move: ")
-
-write_memory(memory_file, memory)
-
-def gemini_rps(move):
-    client = genai.Client()
-
-    memory_file = "memory.zip"
-
-    memory = []
-
-    load_memory(memory_file, memory)
-
-    memory.append("[Start of session]")
-    memory.append("System: System: This is a game of rock paper scissors. You will only be allowed to output one word with your choice, a new line, and who won the round, so two words in total, nothing else"
-    ". while the game is ongoing. If the user wins output only 'User wins' if you win output 'System wins'. Accept creative choices by the user like 'gun' and plan a counterattack. Only output creative moves outside of the normal ones if the user already used a creative move. Accept when you lose to a creative move. Don't be biased and choose the incorrect move sometimes to let the user win at least a 40 percent of the time, more if they are clever. Reward the user for strategy by letting the user win more. Punish the user by not letting them win if they are repeating moves or being simple in the move choices.")
-
-    memory.append("User:" + user_input)
-
-    response = client.models.generate_content(
-        model="gemini-2.5-flash", contents="\n".join(memory)
-    )
-
-    write_memory(memory_file, memory)
-
-    return response.text
+class RPS:
+    def __init__(self):
+        self.choices = ['rock', 'paper', 'scissors']
+        self.player_score = 0
+        self.computer_score = 0
+        self.game_finished = False
+        self.rounds_played = 0
+        self.max_rounds = 3
+        self.last_result = None
+    
+    def play(self, player_choice):
+        if self.game_finished:
+            print("Game is already finished!")
+            return
+        
+        player_choice = player_choice.lower()
+        if player_choice not in self.choices:
+            print("Invalid choice! Use rock, paper, or scissors")
+            return
+        
+        computer_choice = random.choice(self.choices)
+        print(f"Computer chose: {computer_choice}")
+        
+        result = self.determine_winner(player_choice, computer_choice)
+        self.rounds_played += 1
+        
+        if result == "player":
+            self.player_score += 1
+            self.last_result = "You win this round!"
+        elif result == "computer":
+            self.computer_score += 1
+            self.last_result = "Computer wins this round!"
+        else:
+            self.last_result = "It's a tie!"
+        
+        print(self.last_result)
+        print(f"Score - You: {self.player_score}, Computer: {self.computer_score}")
+        
+        if self.rounds_played >= self.max_rounds:
+            self.game_finished = True
+            self.announce_winner()
+    
+    def determine_winner(self, player, computer):
+        if player == computer:
+            return "tie"
+        
+        wins = {
+            'rock': 'scissors',
+            'scissors': 'paper',
+            'paper': 'rock'
+        }
+        
+        if wins[player] == computer:
+            return "player"
+        return "computer"
+    
+    def announce_winner(self):
+        print("\n=== GAME OVER ===")
+        if self.player_score > self.computer_score:
+            print("You won the game!")
+        elif self.computer_score > self.player_score:
+            print("Computer won the game!")
+        else:
+            print("It's a tie game!")

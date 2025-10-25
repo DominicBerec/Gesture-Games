@@ -1,6 +1,17 @@
 import cv2
 import mediapipe as mp
 
+import sys
+import os
+
+# Get the absolute path of the directory containing the module you want to import
+# For example, if 'my_module.py' is in '../another_directory' relative to the current script
+module_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'game_ui'))
+
+# Add the directory to sys.path
+sys.path.insert(0, module_dir) # insert at the beginning for higher priority
+import Board
+
 # Initialize MediaPipe modules
 hand_model = mp.solutions.hands.Hands(   # creates the hand detector
     model_complexity=0,

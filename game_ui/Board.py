@@ -9,15 +9,19 @@ class Board():
             [' ', ' ', ' '],
             [' ', ' ', ' ']
         ]
-        self.current_player = 1
+
         self.game_over = False
     
     def mark_square(self, player, row, col):
-            self.current_player = player
-            self.board[row][col] = self.current_player
-            if self.win_check():
-                print(f"Player {self.current_player} wins!")
-                self.game_over = True
+        if self.board[row][col] != ' ':
+            return False
+
+        self.board[row][col] = player
+        if self.win_check():
+            print(f"Player {player} wins!")
+            self.game_over = True
+        
+        return True
 
     def win_check(self):
         #Check rows

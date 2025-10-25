@@ -1,4 +1,5 @@
 import cv2
+
 import mediapipe as mp
 
 import sys
@@ -6,10 +7,15 @@ import os
 
 # Get the absolute path of the directory containing the module you want to import
 # For example, if 'my_module.py' is in '../another_directory' relative to the current script
-module_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'game_ui'))
+module_dir1 = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'game_ui'))
+module_dir2 = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'gemini_enemy'))
+
 
 # Add the directory to sys.path
-sys.path.insert(0, module_dir) # insert at the beginning for higher priority
+sys.path.insert(0, module_dir1) # insert at the beginning for higher priority
+sys.path.insert(0, module_dir2) # insert at the beginning for higher priority
+
+from ttai import call_tt
 import Board
 
 board = Board.Board()
@@ -106,6 +112,8 @@ while True:
             if distance < 0.07:
                 cv2.putText(frame, "O gesture", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,0), 1)
                 for zone in colored_zones:
+                    if board.game_over:
+                        break
                     x1_frac, y1_frac, x2_frac, y2_frac = zone["coords"]
                     x1 = int(x1_frac * size)
                     y1 = int(y1_frac * size)
@@ -118,8 +126,21 @@ while True:
 
                                 row, col = color_to_row_col(current_zone)
 
-                                board.mark_square(1, row, col)
-                                board.print_board()
+                                success = board.mark_square("O", row, col)
+
+                                if board.game_over:
+                                    break
+
+                                if success:
+                                    print("Success")
+                                    board.print_board()
+
+                                    x, y = call_tt(board.board)
+                                    board.mark_square("X", x, y)
+                                    board.print_board()
+
+                                    if board.game_over:
+                                        break
 
 
 

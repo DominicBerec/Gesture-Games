@@ -46,6 +46,8 @@ while True:
         print("No frame captured.")
         break
 
+    frame = cv2.flip(frame,1)
+
     # Make frame square for MediaPipe
     h, w, _ = frame.shape
     size = min(h, w)

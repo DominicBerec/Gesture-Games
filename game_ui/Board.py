@@ -1,6 +1,6 @@
 class Board():
-    #Create 2D list to store board values: E, X, O
-    #empty E,
+    #Create 2D list to store board values: ' ', X, O
+    #empty ' ',
     #Player X
     #Computer O
     def __init__(self):

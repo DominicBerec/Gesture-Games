@@ -16,9 +16,9 @@ sys.path.insert(0, module_dir1) # insert at the beginning for higher priority
 sys.path.insert(0, module_dir2) # insert at the beginning for higher priority
 
 from ttai import call_tt
-import Board
+import board
 
-board = Board.Board()
+board = board.Board()
 
 # Define zones with relative coordinates (fractions of the frame)
 colored_zones = [

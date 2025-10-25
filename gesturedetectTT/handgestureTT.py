@@ -111,6 +111,25 @@ while True:
             index_tip = landmarks[8]
             fingertip_x, fingertip_y, _ = landmarks[8]
             distance = ((thumb_tip[0]-index_tip[0])**2 + (thumb_tip[1]-index_tip[1])**2)**0.5
+            for zone in colored_zones:
+                    x1_frac, y1_frac, x2_frac, y2_frac = zone["coords"]
+                    x1 = int(x1_frac * size)
+                    y1 = int(y1_frac * size)
+                    x2 = int(x2_frac * size)
+                    y2 = int(y2_frac * size)
+                    color = zone_color[zone["name"]]
+                    frame_thickness = int(20)
+                    if y1 == 0:
+                        cv2.line(frame, (x1, 0), (x2, 0), color, frame_thickness)
+    
+                    if y2 == size:
+                        cv2.line(frame, (x1, size-1), (x2, size-1), color, frame_thickness)
+    
+                    if x1 == 0:
+                        cv2.line(frame, (0, y1), (0, y2), color, frame_thickness)
+    
+                    if x2 == size:
+                        cv2.line(frame, (size-1, y1), (size-1, y2), color, frame_thickness)
             if distance < 0.07:
                 cv2.putText(frame, "O gesture", (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,0), 1)
                 for zone in colored_zones:
@@ -143,6 +162,9 @@ while True:
 
                                     if board.game_over:
                                         break
+
+                                    # top edge
+
 
 
 

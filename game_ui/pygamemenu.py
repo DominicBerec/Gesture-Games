@@ -1,9 +1,20 @@
+
+
 import pygame
 import sys
 import math
 import random
 import os
 from pygame import gfxdraw
+
+module_dir1 = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'gesturedetectTT'))
+
+
+# Add the directory to sys.path
+sys.path.insert(0, module_dir1) # insert at the beginning for higher priority
+
+
+from gestures_ui import cleanup_hand_tracking, get_current_gesture, get_hand_position, setup_hand_tracking, update_hand_tracking, draw_hand_indicator, is_hand_click
 
 class SpriteManager:
     def __init__(self):
@@ -275,6 +286,8 @@ class MainMenu:
             }
         ]
 
+    
+
     def create_background_grid(self):
         grid = []
         for y in range(0, self.WINDOW_HEIGHT + self.grid_size, self.grid_size):
@@ -356,7 +369,7 @@ class MainMenu:
         text_rect = text_surface.get_rect(center=button['rect'].center)
         self.screen.blit(text_surface, text_rect)
 
-    def draw_main_menu(self):
+    def draw_main_menu(self, mouse_pos):  # Add mouse_pos parameter
         # Draw background
         self.screen.fill(self.BACKGROUND)
         self.draw_background()
@@ -389,7 +402,7 @@ class MainMenu:
         
         # Draw buttons
         for button in self.buttons:
-            hover = button['rect'].collidepoint(pygame.mouse.get_pos())
+            hover = button['rect'].collidepoint(mouse_pos)  # Use passed mouse_pos instead
             self.draw_button(button, hover)
             
             if hover and random.random() < 0.1:
@@ -401,16 +414,23 @@ class MainMenu:
     def run(self):
         clock = pygame.time.Clock()
         current_screen = "main_menu"
+        setup_hand_tracking(self)
         
         while True:
-            mouse_pos = pygame.mouse.get_pos()
+            update_hand_tracking(self)
+            hand_pos = get_hand_position(self)
+            mouse_pos = hand_pos if hand_pos else pygame.mouse.get_pos()
+            
+            gesture = get_current_gesture(self)
+            hand_clicked = is_hand_click(self)
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    cleanup_hand_tracking(self)
                     pygame.quit()
                     sys.exit()
                     
-                if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.type == pygame.MOUSEBUTTONDOWN or hand_clicked:
                     if current_screen == "main_menu":
                         for button in self.buttons:
                             if button['rect'].collidepoint(mouse_pos):
@@ -443,13 +463,18 @@ class MainMenu:
             
             # Draw current screen
             if current_screen == "main_menu":
-                self.draw_main_menu()
+                self.draw_main_menu(mouse_pos)  # Pass mouse_pos here
             elif current_screen == "game_select":
                 self.game_select.draw()
+
+            draw_hand_indicator(self)
             
             pygame.display.flip()
             clock.tick(60)
 
+            
+
 if __name__ == "__main__":
     menu = MainMenu()
     menu.run()
+    

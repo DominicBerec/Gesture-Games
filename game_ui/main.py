@@ -46,6 +46,19 @@ class Particle:
 
 class MainMenu:
     current_background = None
+
+    def add_shadow(self, text, x, y):
+        shadow_offset = 5
+        title_shadow = self.font.render(text, True, self.BLACK)
+        title_text = self.font.render(text, True, self.WHITE)
+
+        title_rect = title_text.get_rect(center=(x, y))
+        shadow_rect = title_rect.copy()
+        shadow_rect.x += shadow_offset
+        shadow_rect.y += shadow_offset
+        
+        self.screen.blit(title_shadow, shadow_rect)
+        self.screen.blit(title_text, title_rect)
     
     def __init__(self):
         pygame.init()
@@ -78,7 +91,7 @@ class MainMenu:
         
         # Fonts
         self.font_size = 128
-        self.button_font_size = 36
+        self.button_font_size = 75
         self.font = pygame.font.Font(None, self.font_size)
         self.button_font = pygame.font.Font(None, self.button_font_size)
         
@@ -182,9 +195,12 @@ class MainMenu:
     def draw_button(self, button, hover=False):
         color = self.DARK_BLUE if hover else self.BLUE
         self.draw_pixelated_rect(self.screen, color, button['rect'])
-        
+
+        shadow_text = self.button_font.render(button['text'], True, self.BLACK)
         text_surface = self.button_font.render(button['text'], True, self.WHITE)
+        shadow_rect = shadow_text.get_rect(center=(button['rect'].centerx + 4, button['rect'].centery + 4))
         text_rect = text_surface.get_rect(center=button['rect'].center)
+        self.screen.blit(shadow_text, shadow_rect)
         self.screen.blit(text_surface, text_rect)
 
     def draw_main_menu(self, mouse_pos):
@@ -203,17 +219,7 @@ class MainMenu:
         self.screen.blit(overlay, (0, 0))
         
         # Title with shadow
-        shadow_offset = 5
-        title_shadow = self.font.render("Gesture Games", True, self.BLACK)
-        title_text = self.font.render("Gesture Games", True, self.WHITE)
-        
-        title_rect = title_text.get_rect(center=(self.WINDOW_WIDTH // 2, 100))
-        shadow_rect = title_rect.copy()
-        shadow_rect.x += shadow_offset
-        shadow_rect.y += shadow_offset
-        
-        self.screen.blit(title_shadow, shadow_rect)
-        self.screen.blit(title_text, title_rect)
+        self.add_shadow("Gesture Games", self.WINDOW_WIDTH // 2, 100)
         
         self.draw_mascot(self.WINDOW_WIDTH // 2 - 30, 150)
         

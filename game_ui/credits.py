@@ -34,9 +34,14 @@ class CreditsPage:
     
     def draw_section(self, y, title, items, color):
         """Draw a credit section with title and items"""
-        # Title with underline
+        # Title with underline + shadow
+        title_shadow = self.heading_font.render(title, True, self.COLOR_TEXT_DIM)
         title_surface = self.heading_font.render(title, True, color)
         title_rect = title_surface.get_rect(center=(self.WINDOW_WIDTH // 2, y))
+        title_shadow_rect = title_rect.copy()
+        title_shadow_rect.x += 2
+        title_shadow_rect.y += 2
+        self.screen.blit(title_shadow, title_shadow_rect)
         self.screen.blit(title_surface, title_rect)
         
         # Underline
@@ -45,12 +50,17 @@ class CreditsPage:
                         (self.WINDOW_WIDTH // 2 - underline_width // 2, y + 35),
                         (self.WINDOW_WIDTH // 2 + underline_width // 2, y + 35), 3)
         
-        # Items
+        # Items + shadow
         item_y = y + 65
         for item in items:
-            text_surface = self.body_font.render(item, True, self.COLOR_TEXT)
-            text_rect = text_surface.get_rect(center=(self.WINDOW_WIDTH // 2, item_y))
-            self.screen.blit(text_surface, text_rect)
+            item_shadow = self.body_font.render(item, True, self.COLOR_TEXT_DIM)
+            item_surface = self.body_font.render(item, True, self.COLOR_TEXT)
+            item_rect = item_surface.get_rect(center=(self.WINDOW_WIDTH // 2, item_y))
+            item_shadow_rect = item_rect.copy()
+            item_shadow_rect.x += 2
+            item_shadow_rect.y += 2
+            self.screen.blit(item_shadow, item_shadow_rect)
+            self.screen.blit(item_surface, item_rect)
             item_y += 40
         
         return item_y + 20
@@ -88,9 +98,14 @@ class CreditsPage:
         back_rect = back_text.get_rect(center=self.back_button.center)
         self.screen.blit(back_text, back_rect)
         
-        # Main title
+        # Main title + shadow
+        title_shadow = self.title_font.render("Credits", True, self.COLOR_TEXT_DIM)
         title = self.title_font.render("Credits", True, self.COLOR_TEXT)
         title_rect = title.get_rect(center=(self.WINDOW_WIDTH // 2, 80))
+        title_shadow_rect = title_rect.copy()
+        title_shadow_rect.x += 4
+        title_shadow_rect.y += 4
+        self.screen.blit(title_shadow, title_shadow_rect)
         self.screen.blit(title, title_rect)
         
         subtitle = self.body_font.render("Gesture Games - Hand Gesture Gaming System", True, self.COLOR_TEXT_DIM)
@@ -107,10 +122,15 @@ class CreditsPage:
             self.COLOR_ACCENT
         )
         
-        # Technologies Used
+        # Technologies Used + shadow
         current_y += 20
         tech_title = self.heading_font.render("Technologies Used", True, self.COLOR_HIGHLIGHT)
         tech_rect = tech_title.get_rect(center=(self.WINDOW_WIDTH // 2, current_y))
+        tech_shadow = self.heading_font.render("Technologies Used", True, self.COLOR_TEXT_DIM)
+        tech_shadow_rect = tech_rect.copy()
+        tech_shadow_rect.x += 2
+        tech_shadow_rect.y += 2
+        self.screen.blit(tech_shadow, tech_shadow_rect)
         self.screen.blit(tech_title, tech_rect)
         
         pygame.draw.line(self.screen, self.COLOR_HIGHLIGHT,

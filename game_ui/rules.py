@@ -69,6 +69,25 @@ class RulesPage:
             pygame.draw.rect(self.screen, self.COLOR_HIGHLIGHT, card_rect, 2, border_radius=12)
             
             # Placeholder for gesture icon (large circle)
+            # add images from game_ui/sprites/custom/o_hand.png inside the circle
+            if name == "O-Sign":
+                o_hand = pygame.image.load("game_ui/sprites/custom/o_hand.png")
+                o_hand = pygame.transform.scale(o_hand, (80, 80))
+                self.screen.blit(o_hand, (card_x + card_width // 2 - 42, card_y + 32))
+            elif name == "Rock":
+                rock_hand = pygame.image.load("game_ui/sprites/custom/rock_hand.png")
+                rock_hand = pygame.transform.scale(rock_hand, (80, 80))
+                self.screen.blit(rock_hand, (card_x + card_width // 2 - 42, card_y + 32))
+            elif name == "Paper":
+                paper_hand = pygame.image.load("game_ui/sprites/custom/paper_hand.png")
+                paper_hand = pygame.transform.scale(paper_hand, (80, 80))
+                self.screen.blit(paper_hand, (card_x + card_width // 2 - 42, card_y + 32))
+            elif name == "Scissors":
+                scissors_hand = pygame.image.load("game_ui/sprites/custom/scissors_hand.png")
+                scissors_hand = pygame.transform.scale(scissors_hand, (80, 80))
+                self.screen.blit(scissors_hand, (card_x + card_width // 2 - 42, card_y + 32))
+
+
             center_x = card_x + card_width // 2
             center_y = card_y + 70
             pygame.draw.circle(self.screen, self.COLOR_ACCENT, (center_x, center_y), 40, 3)
@@ -86,9 +105,14 @@ class RulesPage:
     def draw(self):
         self.screen.fill(self.COLOR_BG)
         
-        # Title
+        # Title + shadow
+        title_shadow = self.title_font.render("How to Play", True, self.COLOR_TEXT_DIM)
         title = self.title_font.render("How to Play", True, self.COLOR_TEXT)
         title_rect = title.get_rect(center=(self.WINDOW_WIDTH // 2, 80))
+        title_shadow_rect = title_rect.copy()
+        title_shadow_rect.x += 4
+        title_shadow_rect.y += 4
+        self.screen.blit(title_shadow, title_shadow_rect)
         self.screen.blit(title, title_rect)
         
         # Back button
@@ -125,11 +149,17 @@ class RulesPage:
         ]
         self.draw_card(right_x, content_y, card_width, 280, "Controls", controls_lines)
         
-        # Gesture Guide Section
+        # Gesture Guide Section (same si)
         gesture_y = content_y + 320
-        gesture_title = self.heading_font.render("Hand Gestures", True, self.COLOR_ACCENT)
-        gesture_title_rect = gesture_title.get_rect(center=(self.WINDOW_WIDTH // 2, gesture_y))
-        self.screen.blit(gesture_title, gesture_title_rect)
+        gesture_shadow = self.title_font.render("Hand Gestures", True, self.COLOR_TEXT_DIM)
+        gesture = self.title_font.render("Hand Gestures", True, self.COLOR_TEXT)
+        gesture_rect = gesture.get_rect(center=(self.WINDOW_WIDTH // 2, gesture_y))
+        gesture_shadow_rect = gesture_rect.copy()
+        gesture_shadow_rect.x += 4
+        gesture_shadow_rect.y += 4
+        self.screen.blit(gesture_shadow, gesture_shadow_rect)
+        self.screen.blit(gesture, gesture_rect)
+
         
         # Calculate centered gesture cards
         gesture_cards_width = (320 * 4) + (40 * 3)

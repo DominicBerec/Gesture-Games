@@ -61,12 +61,20 @@ class GameSelect:
         else:
             self.screen.fill((44, 62, 80))
         
-        # Draw title
+        # Draw title        
+        COLOR_TEXT = (241, 245, 249)
+        COLOR_TEXT_DIM = (148, 163, 184)
         title_font = pygame.font.Font(None, 96)
-        title_text = title_font.render("Select a Game", True, (255, 255, 255))
-        title_rect = title_text.get_rect(center=(self.WINDOW_WIDTH // 2, 100))
-        self.screen.blit(title_text, title_rect)
-        
+        title_font_small = pygame.font.Font(None, 46)
+        title_shadow = title_font.render("Select a Game", True, COLOR_TEXT_DIM)
+        title = title_font.render("Select a Game", True, COLOR_TEXT)
+        title_rect = title.get_rect(center=(self.WINDOW_WIDTH // 2, 100))
+        title_shadow_rect = title_rect.copy()
+        title_shadow_rect.x += 4
+        title_shadow_rect.y += 4
+        self.screen.blit(title_shadow, title_shadow_rect)
+        self.screen.blit(title, title_rect)
+
         # Draw game boxes
         for box, title in [(self.rps_box, "Rock Paper Scissors"), (self.ttt_box, "Tic Tac Toe")]:
             # Box background
@@ -74,11 +82,15 @@ class GameSelect:
             pygame.draw.rect(self.screen, (41, 128, 185), box, border_radius=30, width=3)
             
             # Title
-            title_font = pygame.font.Font(None, 48)
-            title_text = title_font.render(title, True, (255, 255, 255))
-            title_rect = title_text.get_rect(centerx=box.centerx, top=box.top + 30)
-            self.screen.blit(title_text, title_rect)
-            
+            title_shadow = title_font_small.render(title, True, COLOR_TEXT_DIM)
+            title = title_font_small.render(title, True, COLOR_TEXT)
+            title_rect = title.get_rect(centerx=box.centerx, top=box.top + 30)
+            title_shadow_rect = title_rect.copy()
+            title_shadow_rect.x += 4
+            title_shadow_rect.y += 4
+            self.screen.blit(title_shadow, title_shadow_rect)
+            self.screen.blit(title, title_rect)
+
             # Draw game icons
             center_x, center_y = box.centerx, box.centery + 30
             
@@ -94,7 +106,7 @@ class GameSelect:
                         self.screen.blit(self.rps_sprites[icon_name], (x, y))
             else:
                 # Draw TTT preview - 3x3 mini grid
-                grid_size = 40
+                grid_size = 80
                 positions = []
                 for row in range(3):
                     for col in range(3):
@@ -116,7 +128,7 @@ class GameSelect:
                                        (pos[0] + size, pos[1] - size),
                                        (pos[0] - size, pos[1] + size), 3)
                     elif symbol == 1:  # O
-                        pygame.draw.circle(self.screen, (100, 100, 255), pos, 12, 3)
+                        pygame.draw.circle(self.screen, (100, 100, 255), pos, 17, 3)
             
             # Hover effect
             mouse_pos = pygame.mouse.get_pos()

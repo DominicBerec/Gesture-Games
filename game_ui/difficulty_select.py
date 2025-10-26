@@ -52,13 +52,18 @@ class DifficultySelect:
             self.screen.blit(MainMenu.current_background, (0, 0))
         else:
             self.screen.fill((44, 62, 80))
-        
-        # Draw title
+
+        # Draw title + shadow
         font = pygame.font.Font(None, 96)
         title = f"Select {self.game_type} Difficulty"
-        title_surface = font.render(title, True, (255, 255, 255))
-        title_rect = title_surface.get_rect(center=(self.WINDOW_WIDTH // 2, 100))
-        self.screen.blit(title_surface, title_rect)
+        title_shadow = font.render(title, True, (100, 100, 100))
+        title = font.render(title, True, (255, 255, 255))
+        title_rect = title.get_rect(center=(self.WINDOW_WIDTH // 2, 100))
+        title_shadow_rect = title_rect.copy()
+        title_shadow_rect.x += 4
+        title_shadow_rect.y += 4
+        self.screen.blit(title_shadow, title_shadow_rect)
+        self.screen.blit(title, title_rect)
         
         # Draw difficulty boxes
         mouse_pos = pygame.mouse.get_pos()
@@ -83,12 +88,16 @@ class DifficultySelect:
                                glow.get_rect(), border_radius=20)
                 self.screen.blit(glow, difficulty['rect'])
             
-            # Difficulty name
-            font = pygame.font.Font(None, 64)
-            text = font.render(difficulty['name'], True, (255, 255, 255))
-            text_rect = text.get_rect(centerx=difficulty['rect'].centerx,
-                                     centery=difficulty['rect'].centery - 20)
-            self.screen.blit(text, text_rect)
+            # Difficulty name + shadow
+            title_shadow = font.render(difficulty['name'], True, (100, 100, 100))
+            title = font.render(difficulty['name'], True, (255, 255, 255))
+            title_rect = title.get_rect(centerx=difficulty['rect'].centerx,
+                                        centery=difficulty['rect'].centery - 20)
+            title_shadow_rect = title_rect.copy()
+            title_shadow_rect.x += 4
+            title_shadow_rect.y += 4
+            self.screen.blit(title_shadow, title_shadow_rect)
+            self.screen.blit(title, title_rect)
             
             # Description
             desc_font = pygame.font.Font(None, 32)

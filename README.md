@@ -32,11 +32,7 @@ py -3.10 game_ui/main.py
 - Multiple game modes and challenges
 
 ## Hand Gesture Controls
-- **Gesture 1**: Description of what this gesture does.
-- **Gesture 2**: Description of what this gesture does.
-- **Gesture 3**: Description of what this gesture does.
-
-## Troubleshooting Guide
-- **Issue 1**: Description of the issue and how to resolve it.
-- **Issue 2**: Description of the issue and how to resolve it.
-- **Issue 3**: Description of the issue and how to resolve it.
+- Rock ✊ - Fist for RPS game
+- Paper ✋ - Open palm for RPS game
+- Scissors ✌️ - Two fingers extended for RPS game
+- O-Sign 👌 - Circle gesture for clicking/selecting in menus and Tic-Tac-Toe

@@ -62,3 +62,23 @@ def call_tt(board):
                     best_move = (i, j)
     
     return best_move
+
+def easy_tt_random(board):
+    """Easy AI move by selecting a random available square"""
+    import random
+    available_moves = [(i, j) for i in range(3) for j in range(3) if board[i][j] == ' ']
+    return random.choice(available_moves) if available_moves else None
+
+def medium_tt(board):
+    """Medium AI move: block opponent's winning move or pick random"""
+    # Check if O can win next move, block it
+    for i in range(3):
+        for j in range(3):
+            if board[i][j] == ' ':
+                board[i][j] = 'O'
+                if check_winner(board) == 'O':
+                    board[i][j] = ' '
+                    return (i, j)
+                board[i][j] = ' '
+    # Otherwise, pick random
+    return easy_tt_random(board)

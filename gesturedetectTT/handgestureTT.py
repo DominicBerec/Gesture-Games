@@ -108,6 +108,7 @@ def handle_o_gesture(frame, board, colored_zones, x, y):
             x_move, y_move = call_tt(board.board)
             board.mark_square("X", x_move, y_move)
             board.print_board()
+    
 
 
 # Initialize MediaPipe modules

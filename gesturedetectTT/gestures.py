@@ -44,13 +44,14 @@ def scissors(landmarks):
     other_fingers_curled = ring_tip[1] > ring_base[1] and pinky_tip[1] > pinky_base[1]
     
     return fingers_separated and other_fingers_curled
-
 def o_sign(landmarks):
     thumb_tip = landmarks[4]
     index_tip = landmarks[8]
     middle_tip = landmarks[12]
     ring_tip = landmarks[16]
     pinky_tip = landmarks[20]
+
+
     
     # Check distance between thumb and index
     distance = ((thumb_tip[0] - index_tip[0])**2 + (thumb_tip[1] - index_tip[1])**2)**0.5

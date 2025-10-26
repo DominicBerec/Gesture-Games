@@ -94,7 +94,7 @@ class RulesPage:
         # Back button
         pygame.draw.rect(self.screen, self.COLOR_CARD_BG, self.back_button, border_radius=10)
         pygame.draw.rect(self.screen, self.COLOR_ACCENT, self.back_button, 2, border_radius=10)
-        back_text = self.body_font.render("← Back", True, self.COLOR_TEXT)
+        back_text = self.body_font.render("Back", True, self.COLOR_TEXT)
         back_rect = back_text.get_rect(center=self.back_button.center)
         self.screen.blit(back_text, back_rect)
         

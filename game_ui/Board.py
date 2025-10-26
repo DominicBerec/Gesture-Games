@@ -42,6 +42,14 @@ class Board():
             self.game_over = True
             return self.board[0][2]
         return None
+    
+    def is_tie(self):
+        for row in self.board:
+            if ' ' in row:
+                return False
+        self.game_over = True
+        return True
+
             
     def print_board(self):
         print(self.board[0])

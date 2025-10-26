@@ -26,6 +26,11 @@ class RockPaperScissorsGame:
         self.countdown_value = 3
         self.captured_gesture = None
         
+        # Gesture hold tracking
+        self.current_held_gesture = None
+        self.gesture_hold_start = None
+        self.GESTURE_HOLD_TIME = 4000  # 4 seconds in milliseconds
+        
         # Load sprites
         self.rps_sprites = self.load_rps_sprites()
         
@@ -92,9 +97,9 @@ class RockPaperScissorsGame:
                 # Add highlight
                 pygame.draw.circle(surf, (255, 255, 255, 60), (95, 95), 30)
                 
-                # Draw symbol
-                font = pygame.font.Font(None, 120)
-                symbols = {'rock': '✊', 'paper': '✋', 'scissors': '✌'}
+                # Draw symbol - use ASCII fallback instead of emoji
+                font = pygame.font.Font(None, 80)
+                symbols = {'rock': 'R', 'paper': 'P', 'scissors': 'S'}
                 text = font.render(symbols[name], True, (255, 255, 255))
                 surf.blit(text, text.get_rect(center=(110, 110)))
                 
@@ -147,6 +152,8 @@ class RockPaperScissorsGame:
         self.phase_start_time = pygame.time.get_ticks()
         self.countdown_value = 3
         self.captured_gesture = None
+        self.current_held_gesture = None
+        self.gesture_hold_start = None
     
     def detect_rps_gesture(self, landmarks):
         """Detect rock, paper, or scissors gesture"""
@@ -174,13 +181,28 @@ class RockPaperScissorsGame:
                 self.phase_start_time = current_time
         
         elif self.phase == self.PHASE_CAPTURE:
-            # Capture gesture during this 1.5 second window
-            if detected_gesture and not self.captured_gesture:
-                self.captured_gesture = detected_gesture
-                self.game.play(detected_gesture)
+            # Track gesture holding
+            if detected_gesture:
+                current_time_ms = pygame.time.get_ticks()
+                
+                # If this is a new gesture or different from what we're tracking
+                if detected_gesture != self.current_held_gesture:
+                    self.current_held_gesture = detected_gesture
+                    self.gesture_hold_start = current_time_ms
+                
+                # Check if gesture has been held long enough
+                elif not self.captured_gesture:
+                    hold_duration = current_time_ms - self.gesture_hold_start
+                    if hold_duration >= self.GESTURE_HOLD_TIME:
+                        self.captured_gesture = detected_gesture
+                        self.game.play(detected_gesture)
+            else:
+                # No gesture detected, reset tracking
+                self.current_held_gesture = None
+                self.gesture_hold_start = None
             
-            # Move to result phase
-            if elapsed >= 1500:
+            # Move to result phase after extended time (12 seconds total)
+            if elapsed >= 12000:
                 if not self.captured_gesture:
                     # No gesture detected, treat as timeout/forfeit
                     self.game.play("rock")  # Default to rock
@@ -249,10 +271,12 @@ class RockPaperScissorsGame:
         # Add subtle glow to divider
         for i in range(1, 4):
             alpha = 20 - (i * 5)
-            pygame.draw.line(self.screen, (*self.COLOR_ACCENT[:3], alpha), 
-                           (line_x - i, 0), (line_x - i, self.WINDOW_HEIGHT), 1)
-            pygame.draw.line(self.screen, (*self.COLOR_ACCENT[:3], alpha), 
-                           (line_x + i, 0), (line_x + i, self.WINDOW_HEIGHT), 1)
+            color_with_alpha = (self.COLOR_ACCENT[0], self.COLOR_ACCENT[1], self.COLOR_ACCENT[2], alpha)
+            # Create a surface for alpha blending
+            glow_surf = pygame.Surface((1, self.WINDOW_HEIGHT), pygame.SRCALPHA)
+            glow_surf.fill(color_with_alpha)
+            self.screen.blit(glow_surf, (line_x - i, 0))
+            self.screen.blit(glow_surf, (line_x + i, 0))
         
         # Update phase
         current_time = pygame.time.get_ticks()
@@ -306,14 +330,42 @@ class RockPaperScissorsGame:
         self.screen.blit(sprite, sprite.get_rect(center=(x, y)))
         
         font = pygame.font.Font(None, 44)
-        if detected_gesture and not self.captured_gesture:
-            text = font.render(f"Detected: {detected_gesture.upper()}!", True, self.COLOR_WIN)
-            self.screen.blit(text, text.get_rect(center=(x, y + 200)))
-        elif self.captured_gesture:
+        
+        if self.captured_gesture:
             text = font.render(f"Locked in: {self.captured_gesture.upper()}!", True, self.COLOR_ACCENT)
             self.screen.blit(text, text.get_rect(center=(x, y + 200)))
+        elif detected_gesture and self.gesture_hold_start:
+            # Show hold progress
+            current_time = pygame.time.get_ticks()
+            hold_duration = current_time - self.gesture_hold_start
+            progress = min(hold_duration / self.GESTURE_HOLD_TIME, 1.0)
+            
+            # Draw progress bar
+            bar_width = 400
+            bar_height = 30
+            bar_x = x - bar_width // 2
+            bar_y = y + 180
+            
+            # Background
+            pygame.draw.rect(self.screen, (71, 85, 105), 
+                           (bar_x, bar_y, bar_width, bar_height), border_radius=15)
+            
+            # Progress fill
+            fill_width = int(bar_width * progress)
+            if fill_width > 0:
+                pygame.draw.rect(self.screen, self.COLOR_WIN, 
+                               (bar_x, bar_y, fill_width, bar_height), border_radius=15)
+            
+            # Border
+            pygame.draw.rect(self.screen, self.COLOR_ACCENT, 
+                           (bar_x, bar_y, bar_width, bar_height), 3, border_radius=15)
+            
+            # Text above progress bar
+            text = font.render(f"Hold {detected_gesture.upper()}... {progress * 100:.0f}%", 
+                             True, self.COLOR_TEXT)
+            self.screen.blit(text, text.get_rect(center=(x, bar_y - 30)))
         else:
-            text = font.render("Show your move NOW!", True, self.COLOR_TEXT)
+            text = font.render("Show your move and HOLD for 4 seconds!", True, self.COLOR_TEXT)
             self.screen.blit(text, text.get_rect(center=(x, y + 200)))
     
     def draw_result_phase(self, x, y):
@@ -341,16 +393,13 @@ class RockPaperScissorsGame:
                 
                 if "You win" in result_text:
                     result_color = self.COLOR_WIN
-                    result_icon = "🎉"
                 elif "Computer wins" in result_text:
                     result_color = self.COLOR_LOSE
-                    result_icon = "😢"
                 else:
                     result_color = self.COLOR_TIE
-                    result_icon = "🤝"
                 
                 result_font = pygame.font.Font(None, 52)
-                result_surface = result_font.render(f"{result_icon} {result_text}", True, result_color)
+                result_surface = result_font.render(result_text, True, result_color)
                 
                 # Result background
                 result_bg = pygame.Surface((result_surface.get_width() + 40, 60), pygame.SRCALPHA)
@@ -400,27 +449,19 @@ class RockPaperScissorsGame:
             result = "Victory!"
             subtitle = "You defeated the computer!"
             color = self.COLOR_WIN
-            icon = "🏆"
         elif self.game.computer_score > self.game.player_score:
             result = "Defeat"
             subtitle = "The computer wins this time"
             color = self.COLOR_LOSE
-            icon = "💔"
         else:
             result = "Draw"
             subtitle = "It's a tie game!"
             color = self.COLOR_TIE
-            icon = "🤝"
         
         # Large result text
         result_font = pygame.font.Font(None, 120)
         result_text = result_font.render(result, True, color)
         self.screen.blit(result_text, result_text.get_rect(center=(x, y - 60)))
-        
-        # Icon
-        icon_font = pygame.font.Font(None, 100)
-        icon_text = icon_font.render(icon, True, color)
-        self.screen.blit(icon_text, icon_text.get_rect(center=(x, y - 160)))
         
         # Subtitle
         subtitle_font = pygame.font.Font(None, 40)

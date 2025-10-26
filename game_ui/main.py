@@ -21,6 +21,8 @@ from ttt_game import TicTacToeGame
 from rps_game import RockPaperScissorsGame
 from game_select import GameSelect
 from difficulty_select import DifficultySelect
+from rules import RulesPage
+from credits import CreditsPage
 
 class Particle:
     def __init__(self, x, y):
@@ -254,6 +256,8 @@ class MainMenu:
         game_select = None
         difficulty_select = None
         game_window = None
+        rules_page = None
+        credits_page = None
         
         while True:
             update_hand_tracking(self)
@@ -280,10 +284,22 @@ class MainMenu:
                                     game_select = GameSelect(self.screen)
                                     current_screen = "game_select"
                                 elif button['text'] == 'Rules':
-                                    print("Rules clicked")
+                                    rules_page = RulesPage(self.screen)
+                                    current_screen = "rules"
                                 elif button['text'] == 'Credits':
-                                    print("Credits clicked")
+                                    credits_page = CreditsPage(self.screen)
+                                    current_screen = "credits"
                                 break
+                    
+                    elif current_screen == "rules":
+                        if rules_page.handle_click(hand_pos):
+                            current_screen = "main_menu"
+                            rules_page = None
+                    
+                    elif current_screen == "credits":
+                        if credits_page.handle_click(hand_pos):
+                            current_screen = "main_menu"
+                            credits_page = None
                     
                     elif current_screen == "game_select":
                         game_choice = game_select.handle_click(hand_pos)
@@ -332,9 +348,21 @@ class MainMenu:
                                         game_select = GameSelect(self.screen)
                                         current_screen = "game_select"
                                     elif button['text'] == 'Rules':
-                                        print("Rules clicked")
+                                        rules_page = RulesPage(self.screen)
+                                        current_screen = "rules"
                                     elif button['text'] == 'Credits':
-                                        print("Credits clicked")
+                                        credits_page = CreditsPage(self.screen)
+                                        current_screen = "credits"
+                        
+                        elif current_screen == "rules":
+                            if rules_page.handle_click(mouse_pos):
+                                current_screen = "main_menu"
+                                rules_page = None
+                        
+                        elif current_screen == "credits":
+                            if credits_page.handle_click(mouse_pos):
+                                current_screen = "main_menu"
+                                credits_page = None
                         
                         elif current_screen == "game_select":
                             game_choice = game_select.handle_click(mouse_pos)
@@ -358,17 +386,27 @@ class MainMenu:
                             if hasattr(game_window, 'handle_click'):
                                 game_window.handle_click(mouse_pos)
                 
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    if current_screen == "game":
-                        if game_window:
-                            game_window.cleanup()
-                            game_window = None
-                        current_screen = "main_menu"
-                        setup_hand_tracking(self)
-                    elif current_screen in ["difficulty_select", "game_select"]:
-                        current_screen = "main_menu"
-                        difficulty_select = None
-                        game_select = None
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        if current_screen == "game":
+                            if game_window:
+                                game_window.cleanup()
+                                game_window = None
+                            current_screen = "main_menu"
+                            setup_hand_tracking(self)
+                        elif current_screen == "main_menu":
+                            exit()
+                        elif current_screen in ["difficulty_select", "game_select", "rules", "credits"]:
+                            current_screen = "main_menu"
+                            difficulty_select = None
+                            game_select = None
+                            rules_page = None
+                            credits_page = None
+                    
+                    # Pass other key events to game windows
+                    if current_screen == "game" and game_window:
+                        if hasattr(game_window, 'handle_event'):
+                            game_window.handle_event(event)
             
             self.update_particles()
             self.screen.fill(self.BACKGROUND)
@@ -379,6 +417,10 @@ class MainMenu:
                 game_select.draw()
             elif current_screen == "difficulty_select":
                 difficulty_select.draw()
+            elif current_screen == "rules":
+                rules_page.draw()
+            elif current_screen == "credits":
+                credits_page.draw()
             elif current_screen == "game":
                 if game_window:
                     game_window.draw()

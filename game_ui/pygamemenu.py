@@ -126,14 +126,15 @@ class GameSelect:
         self.WINDOW_WIDTH = pygame.display.Info().current_w
         self.WINDOW_HEIGHT = pygame.display.Info().current_h
         
-        # Box dimensions - larger, more prominent boxes
-        self.box_width = 500
-        self.box_height = 600
-        self.box_spacing = 100
+        # Box dimensions - more prominent boxes with fixed spacing
+        self.box_width = 400  # Slightly smaller width
+        self.box_height = 500  # Slightly smaller height
+        self.box_spacing = 200  # Increased spacing between boxes
         
         # Create game boxes - centered and elevated
         center_y = self.WINDOW_HEIGHT // 2 - 50  # Slightly elevated from center
-        left_x = (self.WINDOW_WIDTH - (2 * self.box_width + self.box_spacing)) // 2
+        total_width = (2 * self.box_width) + self.box_spacing
+        left_x = (self.WINDOW_WIDTH - total_width) // 2
         
         self.rps_box = pygame.Rect(left_x, center_y - self.box_height//2,
                                  self.box_width, self.box_height)
@@ -152,14 +153,14 @@ class GameSelect:
         # Scale factor for game sprites
         self.icon_size = 128
         
-        # Load RPS sprites from files
-        sprite_path = os.path.join(os.path.dirname(__file__), 'sprites', 'icons')
+        # Load RPS sprites from custom folder
+        sprite_path = os.path.join(os.path.dirname(__file__), 'sprites', 'custom')
         
         # Create RPS sprites with loaded images
         self.rps_sprites = {
-            'rock': self.load_and_scale_sprite(os.path.join(sprite_path, 'rock.png')),
-            'paper': self.load_and_scale_sprite(os.path.join(sprite_path, 'paper.png')),
-            'scissors': self.load_and_scale_sprite(os.path.join(sprite_path, 'scissors.png'))
+            'rock': self.load_and_scale_sprite(os.path.join(sprite_path, 'rock_icon.png')),
+            'paper': self.load_and_scale_sprite(os.path.join(sprite_path, 'paper_icon.png')),
+            'scissors': self.load_and_scale_sprite(os.path.join(sprite_path, 'scissors_icon.png'))
         }
         
         # Create TTT sprites
@@ -241,27 +242,60 @@ class GameSelect:
             
             # Draw game-specific content
             if box == self.rps_box:
-                # Draw RPS sprites in a circle formation
+                # Draw RPS sprites in a triangle formation
                 center_x, center_y = box.centerx, box.centery
-                radius = 150
-                angle = -30  # Starting angle
-                for sprite_name, sprite in sprites.items():
-                    x = center_x + radius * math.cos(math.radians(angle)) - self.icon_size//2
-                    y = center_y + radius * math.sin(math.radians(angle)) - self.icon_size//2
-                    self.screen.blit(sprite, (x, y))
-                    angle += 120  # Evenly space three items
+                spacing = self.icon_size + 30  # Increased spacing
+                
+                # Load and draw hand icons from custom sprites folder
+                custom_path = os.path.join(os.path.dirname(__file__), 'sprites', 'custom')
+                hand_icons = ['rock_icon', 'paper_icon', 'scissors_icon']
+                
+                # Define positions in a triangle formation
+                positions = [
+                    (center_x, center_y - spacing),  # Top center
+                    (center_x - spacing, center_y + spacing),  # Bottom left
+                    (center_x + spacing, center_y + spacing)   # Bottom right
+                ]
+                
+                for i, icon in enumerate(hand_icons):
+                    icon_path = os.path.join(custom_path, f'{icon}.png')
+                    try:
+                        icon_surface = pygame.image.load(icon_path).convert_alpha()
+                        icon_surface = pygame.transform.scale(icon_surface, (self.icon_size, self.icon_size))
+                    except:
+                        # Fallback if sprite not found
+                        icon_surface = pygame.Surface((self.icon_size, self.icon_size), pygame.SRCALPHA)
+                        pygame.draw.rect(icon_surface, (200, 200, 200, 200), 
+                                      (0, 0, self.icon_size, self.icon_size))
+                    
+                    x = positions[i][0] - self.icon_size // 2
+                    y = positions[i][1] - self.icon_size // 2
+                    self.screen.blit(icon_surface, (x, y))
             else:
-                # Draw TTT preview
+                # Draw TTT preview with custom X and O
                 center_x, center_y = box.centerx, box.centery
-                # Draw X and O in a floating pattern
                 positions = [
                     (center_x - 100, center_y - 50),
                     (center_x + 100, center_y - 50),
                     (center_x, center_y + 50)
                 ]
+                
                 for i, pos in enumerate(positions):
-                    sprite = self.ttt_sprites['x'] if i % 2 == 0 else self.ttt_sprites['o']
-                    self.screen.blit(sprite, (pos[0] - self.icon_size//2, pos[1] - self.icon_size//2))
+                    if i % 2 == 0:  # Draw X
+                        x = pos[0] - self.icon_size//2
+                        y = pos[1] - self.icon_size//2
+                        pygame.draw.line(self.screen, (255, 100, 100), 
+                                       (x + 10, y + 10), 
+                                       (x + self.icon_size - 10, y + self.icon_size - 10), 
+                                       6)
+                        pygame.draw.line(self.screen, (255, 100, 100), 
+                                       (x + self.icon_size - 10, y + 10), 
+                                       (x + 10, y + self.icon_size - 10), 
+                                       6)
+                    else:  # Draw O
+                        pygame.draw.circle(self.screen, (100, 100, 255),
+                                        (pos[0], pos[1]),
+                                        self.icon_size//2 - 10, 6)
             
             # Draw hover effect if mouse is over the box
             mouse_pos = pygame.mouse.get_pos()
@@ -366,11 +400,27 @@ class GameWindow:
         self.WINDOW_WIDTH = pygame.display.Info().current_w
         self.WINDOW_HEIGHT = pygame.display.Info().current_h
         
-        # Initialize game specific components
+        # Initialize game specific components based on game type
         if game_type == "TTT":
             self.board = Board()
+            self.game = None
         elif game_type == "RPS":
+            self.board = None
             self.game = RPS()
+        else:
+            raise ValueError(f"Invalid game type: {game_type}")
+        
+        # Initialize game state variables
+        self.countdown = 3
+        self.countdown_timer = None
+        self.last_gesture = None
+        self.last_move = None
+        self.waiting_for_move = False
+        self.move_locked = False
+        self.round_end_timer = None
+        
+        # Load game sprites
+        self.rps_sprites = self.load_rps_sprites() if game_type == "RPS" else None
             
         # Initialize camera
         self.cap = cv2.VideoCapture(0)
@@ -398,6 +448,10 @@ class GameWindow:
         from gestures import get_hand_landmarks, o_sign, paper, rock, scissors
         self.get_hand_landmarks = get_hand_landmarks
         self.o_sign = o_sign
+        
+        # Initialize first round
+        if game_type == "RPS":
+            self.reset_rps_round()
         
     def update(self):
         update_hand_tracking(self)
@@ -536,6 +590,15 @@ class GameWindow:
         # Draw hand indicator if needed
         draw_hand_indicator(self)
     
+    def reset_rps_round(self):
+        """Reset the state for a new RPS round"""
+        self.countdown = 3
+        self.countdown_timer = pygame.time.get_ticks()
+        self.last_move = None
+        self.waiting_for_move = False
+        self.move_locked = False
+        self.round_end_timer = None
+    
     def draw_ttt_game(self):
         # Draw board on the right half of the screen
         cell_size = 150
@@ -628,27 +691,208 @@ class GameWindow:
         text_rect = text.get_rect(center=(self.WINDOW_WIDTH * 3 // 4, self.WINDOW_HEIGHT - 50))
         self.screen.blit(text, text_rect)
     
+    def load_rps_sprites(self):
+        sprites = {}
+        sprite_path = os.path.join(os.path.dirname(__file__), 'sprites', 'custom')
+        
+        # Load the game sprites
+        sprite_names = {
+            'rock': 'rock_icon',
+            'paper': 'paper_icon',
+            'scissors': 'scissors_icon'
+        }
+        
+        # Create countdown numbers with brighter colors and outline
+        font = pygame.font.Font(None, 150)
+        for i in range(1, 4):
+            surf = pygame.Surface((200, 200), pygame.SRCALPHA)
+            # Draw outline
+            outline_text = font.render(str(4-i), True, (0, 0, 0))
+            for dx, dy in [(-2,-2), (-2,2), (2,-2), (2,2)]:  # Outline positions
+                text_rect = outline_text.get_rect(center=(100+dx, 100+dy))
+                surf.blit(outline_text, text_rect)
+            # Draw main text
+            text = font.render(str(4-i), True, (255, 255, 255))
+            text_rect = text.get_rect(center=(100, 100))
+            surf.blit(text, text_rect)
+            sprites[f'countdown_{i}'] = surf
+        
+        # Create "GO!" text with outline
+        go_surf = pygame.Surface((200, 200), pygame.SRCALPHA)
+        # Draw outline
+        outline_text = font.render("GO!", True, (0, 0, 0))
+        for dx, dy in [(-2,-2), (-2,2), (2,-2), (2,2)]:
+            text_rect = outline_text.get_rect(center=(100+dx, 100+dy))
+            go_surf.blit(outline_text, text_rect)
+        # Draw main text
+        go_text = font.render("GO!", True, (255, 0, 0))  # Make GO! red for emphasis
+        go_rect = go_text.get_rect(center=(100, 100))
+        go_surf.blit(go_text, go_rect)
+        sprites['go'] = go_surf
+        
+        # Load custom RPS sprites
+        for game_name, file_name in sprite_names.items():
+            sprite_file = os.path.join(sprite_path, f'{file_name}.png')
+            try:
+                if os.path.exists(sprite_file):
+                    sprite = pygame.image.load(sprite_file).convert_alpha()
+                    sprites[game_name] = pygame.transform.scale(sprite, (200, 200))
+                else:
+                    print(f"Sprite file not found: {sprite_file}")
+                    raise FileNotFoundError
+            except Exception as e:
+                print(f"Creating fallback sprite for {game_name}: {e}")
+                # Create more distinctive placeholder sprites
+                temp_surface = pygame.Surface((200, 200), pygame.SRCALPHA)
+                colors = {
+                    'rock': ((200, 100, 100), "✊"),
+                    'paper': ((100, 200, 100), "✋"),
+                    'scissors': ((100, 100, 200), "✌")
+                }
+                color, symbol = colors.get(game_name, ((200, 200, 200), "?"))
+                # Draw filled circle background
+                pygame.draw.circle(temp_surface, (*color, 200), (100, 100), 90)
+                # Draw symbol
+                symbol_font = pygame.font.Font(None, 120)
+                symbol_text = symbol_font.render(symbol, True, (255, 255, 255))
+                symbol_rect = symbol_text.get_rect(center=(100, 100))
+                temp_surface.blit(symbol_text, symbol_rect)
+                sprites[game_name] = temp_surface
+        
+        return sprites
+
     def draw_rps_game(self):
-        # Draw RPS game on the right half
+        # Setup fonts and positions
         font = pygame.font.Font(None, 48)
-        x = self.WINDOW_WIDTH // 2 + 50
-        y = 50
+        small_font = pygame.font.Font(None, 36)
+        right_half_center_x = self.WINDOW_WIDTH * 3 // 4
+        center_y = self.WINDOW_HEIGHT // 2
         
-        # Draw scores
-        score_text = f"Player: {self.game.player_score} vs Computer: {self.game.computer_score}"
-        score_surface = font.render(score_text, True, (255, 255, 255))
-        self.screen.blit(score_surface, (x, y))
+        # Get current time and gesture
+        current_time = pygame.time.get_ticks()
+        gesture = get_current_gesture(self) or "none"  # Default to "none" if no gesture detected
         
+        # If game is finished, show final result and return
+        if self.game.game_finished:
+            # Determine winner
+            if self.game.player_score > self.game.computer_score:
+                result = "You won the game!"
+            elif self.game.computer_score > self.game.player_score:
+                result = "Computer won the game!"
+            else:
+                result = "It's a tie game!"
+            
+            # Draw final result
+            result_surface = font.render(result, True, (255, 255, 255))
+            result_rect = result_surface.get_rect(center=(right_half_center_x, center_y))
+            self.screen.blit(result_surface, result_rect)
+            
+            # Show return to menu instruction
+            instruction = "Press ESC to return to menu"
+            inst_surface = font.render(instruction, True, (255, 255, 255))
+            inst_rect = inst_surface.get_rect(center=(right_half_center_x, center_y + 100))
+            self.screen.blit(inst_surface, inst_rect)
+            return
+
+        # Initialize countdown if needed
+        if self.countdown_timer is None:
+            self.countdown_timer = current_time
+            self.countdown = 3
+            self.last_gesture = None
+        
+        # Calculate time elapsed since last countdown update
+        elapsed = current_time - self.countdown_timer
+        
+        # Update countdown every second
+        if elapsed >= 1000:
+            self.countdown_timer = current_time
+            if self.countdown > 0:
+                self.countdown -= 1
+        
+        # Display appropriate game phase
+        if self.countdown > 0:
+            # Phase 1: Countdown (3,2,1)
+            sprite = self.rps_sprites[f'countdown_{self.countdown}']
+            self.screen.blit(sprite, sprite.get_rect(center=(right_half_center_x, center_y)))
+        
+        elif elapsed < 1000:
+            # Phase 2: GO!
+            sprite = self.rps_sprites['go']
+            self.screen.blit(sprite, sprite.get_rect(center=(right_half_center_x, center_y)))
+        
+        else:
+            # Phase 3: Gameplay
+            # Handle player move if gesture changed
+            if gesture in ["rock", "paper", "scissors"] and gesture != self.last_gesture:
+                self.last_gesture = gesture
+                self.last_move = gesture
+                self.game.play(gesture)
+                
+                # Reset for next round if not game over
+                if not self.game.game_finished:
+                    self.countdown = 3
+                    self.countdown_timer = current_time + 1000
+            
+            # Display last played moves if available
+            if self.last_move and self.game.computer_choice:
+                # Player move (left side)
+                player_sprite = self.rps_sprites[self.last_move]
+                self.screen.blit(player_sprite, player_sprite.get_rect(
+                    center=(right_half_center_x - 200, center_y)))
+                
+                # Computer move (right side)
+                comp_sprite = self.rps_sprites[self.game.computer_choice]
+                self.screen.blit(comp_sprite, comp_sprite.get_rect(
+                    center=(right_half_center_x + 200, center_y)))
+                
+                # Labels
+                for side, text, x_offset in [
+                    ("Your Move", self.last_move, -200),
+                    ("Computer's Move", self.game.computer_choice, 200)
+                ]:
+                    # Draw label above
+                    label = small_font.render(side, True, (255, 255, 255))
+                    self.screen.blit(label, label.get_rect(
+                        center=(right_half_center_x + x_offset, center_y - 120)))
+                    
+                    # Draw move name below
+                    move_text = small_font.render(text.capitalize(), True, (255, 255, 255))
+                    self.screen.blit(move_text, move_text.get_rect(
+                        center=(right_half_center_x + x_offset, center_y + 120)))
+
+        # Always show current gesture preview at bottom
+        if gesture in ["rock", "paper", "scissors"]:
+            # Preview sprite
+            current_sprite = self.rps_sprites[gesture]
+            self.screen.blit(current_sprite, current_sprite.get_rect(
+                center=(right_half_center_x, self.WINDOW_HEIGHT - 150)))
+            
+            # Preview label
+            preview_text = f"Current gesture: {gesture.capitalize()}"
+            preview_surface = small_font.render(preview_text, True, (255, 255, 255))
+            self.screen.blit(preview_surface, preview_surface.get_rect(
+                center=(right_half_center_x, self.WINDOW_HEIGHT - 50)))
+        
+        # Draw round result if available
         if self.game.last_result:
-            y += 60
             result_surface = font.render(self.game.last_result, True, (255, 255, 255))
-            self.screen.blit(result_surface, (x, y))
+            self.screen.blit(result_surface, result_surface.get_rect(
+                center=(right_half_center_x, self.WINDOW_HEIGHT - 100)))
     
     def cleanup(self):
         if self.cap:
             self.cap.release()
         if hasattr(self, 'hand_model'):
             self.hand_model.close()
+            
+    def reset_rps_round(self):
+        """Reset the state for a new RPS round"""
+        self.countdown = 3
+        self.countdown_timer = pygame.time.get_ticks()
+        self.last_move = None
+        self.waiting_for_move = False
+        self.move_locked = False
+        self.round_end_timer = None
 
 class MainMenu:
     # Class variable to store the current background

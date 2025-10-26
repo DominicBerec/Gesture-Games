@@ -9,31 +9,28 @@ class RPS:
         self.rounds_played = 0
         self.max_rounds = 3
         self.last_result = None
-    
+        self.computer_choice = None
+        
     def play(self, player_choice):
         if self.game_finished:
-            print("Game is already finished!")
             return
         
         player_choice = player_choice.lower()
         if player_choice not in self.choices:
-            print("Invalid choice! Use rock, paper, or scissors")
             return
         
-        computer_choice = random.choice(self.choices)
-        print(f"Computer chose: {computer_choice}")
-        
-        result = self.determine_winner(player_choice, computer_choice)
+        self.computer_choice = random.choice(self.choices)
+        result = self.determine_winner(player_choice, self.computer_choice)
         self.rounds_played += 1
         
         if result == "player":
             self.player_score += 1
-            self.last_result = "You win this round!"
+            self.last_result = f"You chose {player_choice}, Computer chose {self.computer_choice}. You win!"
         elif result == "computer":
             self.computer_score += 1
-            self.last_result = "Computer wins this round!"
+            self.last_result = f"You chose {player_choice}, Computer chose {self.computer_choice}. Computer wins!"
         else:
-            self.last_result = "It's a tie!"
+            self.last_result = f"You both chose {player_choice}. It's a tie!"
         
         print(self.last_result)
         print(f"Score - You: {self.player_score}, Computer: {self.computer_score}")

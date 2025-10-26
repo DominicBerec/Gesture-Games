@@ -93,7 +93,7 @@ class CreditsPage:
         title_rect = title.get_rect(center=(self.WINDOW_WIDTH // 2, 80))
         self.screen.blit(title, title_rect)
         
-        subtitle = self.body_font.render("Game Agent - Hand Gesture Gaming System", True, self.COLOR_TEXT_DIM)
+        subtitle = self.body_font.render("Gesture Games - Hand Gesture Gaming System", True, self.COLOR_TEXT_DIM)
         subtitle_rect = subtitle.get_rect(center=(self.WINDOW_WIDTH // 2, 140))
         self.screen.blit(subtitle, subtitle_rect)
         

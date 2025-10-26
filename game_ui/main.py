@@ -52,7 +52,7 @@ class MainMenu:
         self.WINDOW_WIDTH = pygame.display.Info().current_w
         self.WINDOW_HEIGHT = pygame.display.Info().current_h
         self.screen = pygame.display.set_mode((self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
-        pygame.display.set_caption("Game Agent")
+        pygame.display.set_caption("Gesture Games")
         
         # Load background
         self.background = self.load_random_background()
@@ -204,8 +204,8 @@ class MainMenu:
         
         # Title with shadow
         shadow_offset = 5
-        title_shadow = self.font.render("Game Agent", True, self.BLACK)
-        title_text = self.font.render("Game Agent", True, self.WHITE)
+        title_shadow = self.font.render("Gesture Games", True, self.BLACK)
+        title_text = self.font.render("Gesture Games", True, self.WHITE)
         
         title_rect = title_text.get_rect(center=(self.WINDOW_WIDTH // 2, 100))
         shadow_rect = title_rect.copy()
